@@ -13,6 +13,8 @@ def load_image(path, size, processor=None):
         return processor(img)
     return img
 
+
+
 def load_image_from_url(url):
     try:
         f = urllib.request.urlopen(url)

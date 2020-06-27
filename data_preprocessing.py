@@ -1,17 +1,43 @@
 import tensorflow as tf
 import os
+import json
 
-MSCOCO_IMG_URL = 'http://images.cocodataset.org/zips/train2014.zip'
-MSCOCO_ANNOT_URL = 'http://images.cocodataset.org/annotations/annotations_trainval2014.zip'
+from layers.VGG19 import VGG19
 
-def download_file(url, name=''):
-    
-    is_zip = url.split('.')[-1] == 'zip'
-    print(is_zip)
-    file = tf.keras.utils.get_file( fname=name,
-                                    origin=url, 
-                                    extract=is_zip)
+
+def create_feature_vectors():
+    vgg = VGG19()
+
+    print(vgg.layers)
+    pass
+
+
+def process_train_test_captions():
+    save_captions('mscoco/train/annotations/captions_train2014.json', 'extracted_data/train')
+    save_captions('mscoco/test/annotations/captions_val2014.json', 'extracted_data/test')
+
+
+def save_captions(in_file, out_file):
+    with open(in_file) as f:
+        data = json.load(f)
+
+    captions = []
+    image_ids = []
+
+    for element in data['annotations']:
+        captions.append('<START> ' + element['caption'] + ' <END>')
+        image_ids.append(element['image_id'])
+        # print('<START> ' + element['caption'] + ' <END>' + ' ' + str(element['image_id']))
+
+    with open(out_file + '/captions.json', 'w') as f1:
+        f1.write(json.dumps(captions))
+
+    with open(out_file + '/image_ids.json', 'w') as f2:
+        f2.write(json.dumps(image_ids))
+
+    return captions, image_ids
 
 
 if __name__ == "__main__":
-    download_file(MSCOCO_ANNOT_URL, 'annotations.zip')
+    # process_train_test_captions()
+    pass
