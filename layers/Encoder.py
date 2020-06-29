@@ -6,9 +6,10 @@ import numpy as np
 
 class Encoder(nn.Module):
 
-    def __init__(self):
-        super(Encoder, self).__init__()
+    def __init__(self, encoder_input, encoder_output):
+        super().__init__()
+        self.fc = nn.Linear(encoder_input, encoder_output)
 
     def forward(self, x):
-        # x = self.fc(x)
+        x = torch.relu(self.fc(x))
         return x
