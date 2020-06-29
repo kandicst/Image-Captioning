@@ -11,5 +11,7 @@ class Encoder(nn.Module):
         self.fc = nn.Linear(encoder_input, encoder_output)
 
     def forward(self, x):
+        # print("WAAT ")
+        # print(dir(self))
         x = torch.relu(self.fc(x))
         return x

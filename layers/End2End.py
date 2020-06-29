@@ -5,31 +5,24 @@ import numpy as np
 
 
 class End2End(nn.Module):
-    def __init__(self, encoder, decoder, device):
+    def __init__(self, encoder, decoder, criterion, device):
         super(End2End, self).__init__()
 
         self.encoder = encoder
         self.decoder = decoder
-
+        self.criterion = criterion
         self.to(device)
 
     def forward(self, x, captions):
-        print(x.shape)
-        batch_size = x.shape[1]
-        encoder_out = self.encoder(x)
-        print(encoder_out.shape)
-        max_len = captions.shape[0]
+        batch_size, caption_length = x.shape[:2]
 
-        all_outputs = torch.zeros(max_len, batch_size, self.decoder.decoder_dims)
+        features = self.encoder(x)
 
-        # first input yo yhe decoder is <START> token
-        out = captions[0, :]
-        print("START " + str(out))
+        hidden = self.decoder.reset_state(batch_size=batch_size)
+        decoder_input = [word_to_idx['<start>']] * batch_size
+        decoder_input = torch.as_tensor(decoder_input).unsqueeze(1)
 
-        hidden = torch.zeros(self.decoder.encoder_dims)
-        for i in range(max_len):
-            out, hidden = self.decoder(out, hidden, encoder_out)
-            all_outputs[i] = out
-            out = out.max(1)[1]
-
-        return all_outputs
+        loss = 0
+        for i in range(caption_length):
+            predictions, hidden = self.decoder(decoder_input, features, hidden)
+            loss += self.criterion(captions[:,i].unsqueeze(-1), predictions)
