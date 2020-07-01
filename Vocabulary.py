@@ -8,13 +8,13 @@ class Vocabulary:
         self.word_to_idx = {"<pad>": 0, "<start>": 1, "<end>": 2, '<unk>': 3}
         self.idx_to_word = {0: "<pad>", 1: "<start>", 2: "<end>", 3: '<unk>'}
         self.encoded_captions = []
-        self.unk_idx = 0
+        self.unk_idx = self.word_to_idx['<unk>']
         self.top_words = top_words
 
         self.build_vocabulary(text)
 
     def preprocess_sentence(self, caption):
-        return caption.lower.split()
+        return caption.lower().split()
 
     def build_vocabulary(self, text):
         self.build_word_frequencies(text)

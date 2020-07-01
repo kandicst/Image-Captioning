@@ -7,7 +7,7 @@ from layers.Attention import Attention
 
 class Decoder(nn.Module):
     def __init__(self, encoder_dim, decoder_hidden_dim, decoder_dim, attention_dim, device,
-                 embedding_dim=256, dropout_p=0.5, vocab_size=10000):
+                 embedding_dim=256, vocab_size=10000, dropout_p=0.5):
         super().__init__()
 
         self.encoder_dims = encoder_dim
@@ -20,7 +20,6 @@ class Decoder(nn.Module):
         self.attention = Attention(encoder_dim, decoder_dim, attention_dim, device)
         self.rnn = nn.GRU(encoder_dim + embedding_dim, decoder_hidden_dim, batch_first=True)
 
-        # self.fc1 = nn.Linear(attention_dim + embedding_dim, decoder_dim)
         self.fc1 = nn.Linear(decoder_hidden_dim, decoder_hidden_dim)
         self.fc2 = nn.Linear(decoder_dim, vocab_size)
         self.dropout = nn.Dropout(dropout_p)
@@ -28,7 +27,7 @@ class Decoder(nn.Module):
         self.to(device)
 
     def forward(self, x, features, hidden):
-        x = x.to(self.device)
+        x = x.long().to(self.device)
         context_vector, attention_weights = self.attention(features, hidden)
 
         x = self.embedding(x)
@@ -43,7 +42,7 @@ class Decoder(nn.Module):
         x = x.reshape((-1, x.shape[2]))
         x = self.fc2(x)
 
-        return x, state
+        return x, state, attention_weights
 
     def reset_state(self, batch_size):
         return torch.zeros((batch_size, self.decoder_dims))
