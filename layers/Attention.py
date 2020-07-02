@@ -19,7 +19,6 @@ class Attention(nn.Module):
 
     def forward(self, features, hidden):
         features = features.to(self.device)
-        hidden = hidden.to(self.device)
 
         h_t = hidden.unsqueeze(1)
 

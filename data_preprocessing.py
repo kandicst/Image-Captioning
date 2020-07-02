@@ -2,15 +2,43 @@ import tensorflow as tf
 import os
 import json
 
-from layers.VGG19 import VGG19
+from layers.ResNet import ResNet
+import numpy as np
+from PIL import Image
+from torchvision import transforms
+import urllib.request
+import io
+resnet = ResNet()
 
+def preprocess_image(img_path):
+    img = Image.open(img_path +'.jpg')
+    if len(np.array(img).shape) == 2:
+        img = img.convert('RGB')
+    img = transform_image(img)
+    return img
 
-def create_feature_vectors():
-    vgg = VGG19()
+def preprocess_image_web(img_link):
+    fd = urllib.request.urlopen(img_link)
+    image_file = io.BytesIO(fd.read())
+    img = Image.open(image_file)
+    if len(np.array(img).shape) == 2:
+        img = img.convert('RGB')
+    img = transform_image(img)
+    return img
 
-    print(vgg.layers)
-    pass
+def pycoco_preprocess(img, target):
+    if len(np.array(img).shape) == 2:
+        img = img.convert('RGB')
+    img = transform_image(img)
+    return img, target
 
+def transform_image(img, input_size=256):
+    img = transforms.Resize(input_size)(img)
+    img = transforms.CenterCrop(input_size)(img)
+    img = transforms.ToTensor()(img)
+    img =  transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
+    img = resnet(img.unsqueeze(0))
+    return img
 
 def process_train_test_captions():
     save_captions('mscoco/train/annotations/captions_train2014.json', 'extracted_data/train')

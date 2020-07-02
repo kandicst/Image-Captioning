@@ -37,12 +37,12 @@ class End2End(nn.Module):
             predictions, hidden, attn_weights = self.decoder(decoder_input, features, hidden)
             target = captions[:, i]
             max_words = torch.max(predictions, 1)[1]
-            if train:
-                loss = self.criterion(predictions, target.long())
-                decoder_input = target.unsqueeze(-1)
-            else:
-                loss = self.criterion(predictions, max_words.long())
-                decoder_input = max_words.unsqueeze(-1)
+            loss = self.criterion(predictions, target.long())
+            # print(predictions.shape)
+            # print(target.long().shape)
+            # print('-----------------')
+            decoder_input = target.unsqueeze(-1)
+            # print(max_words)
             total_loss += loss
             out[:, i] = max_words
 
@@ -60,7 +60,7 @@ class End2End(nn.Module):
         for i in range(50):
             predictions, hidden, attn_weights = self.decoder(decoder_input, features, hidden)
             max_words = torch.max(predictions, 1)[1]
-            print(predictions)
+            # print(predictions)
             word = self.vocab.idx_to_word[max_words.item()]
             result.append(word)
             if word == '<end>':
