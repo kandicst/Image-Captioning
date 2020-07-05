@@ -13,6 +13,5 @@ class Encoder(nn.Module):
 
     def forward(self, x):
         x = x.to(self.device)
-        # x.flatten(1)
         x = torch.relu(self.fc(x))
         return x

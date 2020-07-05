@@ -13,7 +13,7 @@ class Attention(nn.Module):
         self.features_fc = nn.Linear(encoder_dim, attention_dim)
         self.hidden_fc = nn.Linear(decoder_dim, attention_dim)
         self.combined_fc = nn.Linear(attention_dim, 1)
-        self.softmax = nn.Softmax(dim=2)
+        self.softmax = nn.Softmax(dim=1)
 
         self.to(device)
 
@@ -26,7 +26,16 @@ class Attention(nn.Module):
         h_t = self.hidden_fc(h_t)
 
         e_t = torch.tanh(a + h_t)
-        alpha = self.softmax(self.combined_fc(e_t))
+        # print("SCORE: ", e_t.shape)
+        full = self.combined_fc(e_t)
+        # print(full.shape)
+        alpha = self.softmax(full)
+        # print("ATT: ", alpha.shape)
+        # print(alpha[0])
+        # print(alpha.shape)
+        # print(alpha[0].tolist())
         context_vector = (features * alpha).sum(dim=1)
+        # print("CTX: ", context_vector.shape)
+        # raise Exception()
 
         return context_vector, alpha

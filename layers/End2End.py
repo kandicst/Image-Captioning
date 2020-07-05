@@ -14,14 +14,20 @@ class End2End(nn.Module):
 
         self.encoder = Encoder(enc_input, enc_output, device)
         self.decoder = Decoder(enc_output, dec_hidden, dec_output,
-                               attn_dim, device, emb_dim, vocab.top_words)
+                               attn_dim, device, emb_dim, vocab.top_words, vocab)
         self.criterion = criterion
         self.vocab = vocab
 
         self.device = device
         self.to(self.device)
 
-    def forward(self, x, captions, train=True):
+    def forward2(self, x, captions):
+        captions = captions.long().to(self.device)
+        features = self.encoder(x)
+
+        return self.decoder(features, captions, self.criterion)
+
+    def forward(self, x, captions):
         captions = captions.long().to(self.device)
         batch_size, caption_length = captions.shape[:2]
         out = torch.zeros((batch_size, caption_length))
@@ -38,6 +44,7 @@ class End2End(nn.Module):
             target = captions[:, i]
             max_words = torch.max(predictions, 1)[1]
             loss = self.criterion(predictions, target.long())
+            # loss += ((1. - attn_weights.sum(dim=1)) ** 2).mean()
             # print(predictions.shape)
             # print(target.long().shape)
             # print('-----------------')
@@ -47,6 +54,10 @@ class End2End(nn.Module):
             out[:, i] = max_words
 
         return out, total_loss
+
+    def evaluate2(self, x):
+        features = self.encoder(x)
+        return self.decoder.evaluate(features)
 
     def evaluate(self, x, captions=None, tf=False):
 

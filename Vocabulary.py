@@ -1,4 +1,5 @@
 from collections import defaultdict
+import re
 
 
 class Vocabulary:
@@ -12,9 +13,6 @@ class Vocabulary:
         self.top_words = top_words
 
         self.build_vocabulary(text)
-
-    def preprocess_sentence(self, caption):
-        return caption.lower().split()
 
     def build_vocabulary(self, text):
         self.build_word_frequencies(text)
@@ -36,6 +34,11 @@ class Vocabulary:
         self.word_freq.pop("<start>", None)
         self.word_freq.pop("<end>", None)
 
+    def preprocess_sentence(self, caption):
+        caption = caption.lower()
+        caption = re.sub('[^A-Za-z0-9 <>]+', '', caption)
+        return caption.split()
+
     def build_word_mappings(self):
         start_idx = len(self.word_to_idx)
         for word in sorted(self.word_freq, key=self.word_freq.get, reverse=True):
@@ -49,3 +52,7 @@ class Vocabulary:
 
     def decode_sentence(self, indices):
         return " ".join([self.idx_to_word.get(x, '<unk>') for x in indices])
+
+
+# if __name__ == '__main__':
+    # preprocess_sentence('<START>........... A very clean and well decorated empty bathroom <END>')

@@ -8,7 +8,7 @@ batch_size, w, h = 64, 64, 2048
 
 
 class MyDataset(Dataset):
-    def __init__(self, enc_captions, image_paths, data_dir, max_cache_size=4000, use_cache=False):
+    def __init__(self, enc_captions, image_paths, data_dir, max_cache_size=10000, use_cache=False):
         self.enc_captions = enc_captions
         self.image_paths = image_paths
         self.data_dir = data_dir
