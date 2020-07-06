@@ -34,19 +34,27 @@ class MyDataset(Dataset):
         new_dim = np.prod(img.shape[1: -1])
         return torch.reshape(img, (new_dim, img.shape[-1]))
 
+    def get_captions_for_img(self, target_img_name):
+        captions = []
+        for idx, img_name in enumerate(self.image_paths):
+            if img_name == target_img_name:
+                captions.append(self.enc_captions[idx])
+
+        return captions
+
     def __getitem__(self, index):
-        name = self.data_dir + self.image_paths[index].split('/')[-1]
+        img_name = self.image_paths[index].split('/')[-1]
+        name = self.data_dir + img_name
 
         if not self.use_cache:
             img = self.load_img_from_disk(name)
 
             if self.cache_count < self.max_cache_size:
-                # self.cache[self.cache_count] = img
                 self.cache.append(img)
                 self.img_to_idx[name] = self.cache_count
                 self.cache_count += 1
 
-            return img, self.enc_captions[index], name
+            return img, self.enc_captions[index], self.image_paths[index]
 
         if name in self.img_to_idx.keys():
             idx = self.img_to_idx[name]
@@ -54,7 +62,7 @@ class MyDataset(Dataset):
         else:
             x = self.load_img_from_disk(name)
 
-        return x, self.enc_captions[index], name
+        return x, self.enc_captions[index], self.image_paths[index]
 
     def __len__(self):
         return len(self.enc_captions)

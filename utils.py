@@ -1,41 +1,34 @@
-import numpy as np
-import os, urllib.request, tempfile
-from PIL import Image
 import json
 import torch
-import matplotlib.pyplot as plt
+from nltk.translate.bleu_score import corpus_bleu
 
 
-def load_image(path, size, processor=None):
-    """ Loads, resizes and preprocesses image from disk """
+def calculate_bleu(out, img_names, dataset, vocab):
+    references = []
+    candidates = []
+    for idx, out_caption in enumerate(out):
+        decoded = vocab.decode_sentence(out_caption.tolist())
+        all_caps = dataset.get_captions_for_img(img_names[idx])
+        current_candidate = []
+        for word in decoded.split(' '):
+            if word in ['<end>', '<pad>']:
+                break
+            current_candidate.append(word)
+        candidates.append(current_candidate)
 
-    H, W = size
-    img = Image.open(path)
-    img = np.array(Image.fromarray(img).resize(H, W))
+        current_references = []
+        for caption in all_caps:
+            decoded = vocab.decode_sentence(caption.tolist())
+            current_references.append([word for word in decoded.split(' ') if word not in ['<end>', '<pad>']])
 
-    if processor is not None:
-        return processor(img)
-    return img
+        references.append(current_references)
+
+    return corpus_bleu(references, candidates)
 
 
 def load_json(file):
     with open(file, 'r') as f1:
         return json.loads(f1.read())
-
-
-def load_image_from_url(url):
-    try:
-        f = urllib.request.urlopen(url)
-        _, fname = tempfile.mkstemp()
-        with open(fname, 'wb') as file:
-            file.write(f.read())
-
-        img = Image.open(fname)
-        os.remove(fname)
-        return img
-    except Exception as e:
-        print("Error while loading image " + url)
-        print(e.code)
 
 
 def save_model(model, name='saved_models/model'):
@@ -44,10 +37,3 @@ def save_model(model, name='saved_models/model'):
 
 def load_model(model, name='saved_models/model'):
     model.load_state_dict(torch.load(name))
-
-def plot_loss(loss_plot):
-    plt.plot(loss_plot)
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.title('Loss Plot')
-    plt.show()

@@ -3,7 +3,22 @@ import re
 
 
 class Vocabulary:
+    """
+    Parameters
+    -----------
+    top_words: int
+        max number of words in vocabulary
 
+    Attributes
+    -----------
+    word_freq: dict
+        maps each words to number of its occurrences in corpus
+    word_to_idx : dict
+        maps each word to a non-negative integer
+    idx_to_word: dict
+        reverse mapping from word_to_idx
+
+    """
     def __init__(self, text, top_words=10000):
         self.word_freq = defaultdict(int)
         self.word_to_idx = {"<pad>": 0, "<start>": 1, "<end>": 2, '<unk>': 3}
@@ -11,6 +26,7 @@ class Vocabulary:
         self.encoded_captions = []
         self.unk_idx = self.word_to_idx['<unk>']
         self.top_words = top_words
+        self.max_len = 0
 
         self.build_vocabulary(text)
 
@@ -52,6 +68,11 @@ class Vocabulary:
 
     def decode_sentence(self, indices):
         return " ".join([self.idx_to_word.get(x, '<unk>') for x in indices])
+
+    def decode_and_clean(self, indices):
+        caption = self.decode_sentence(indices)
+        return caption[:caption.index('<pad>')]
+
 
 
 # if __name__ == '__main__':

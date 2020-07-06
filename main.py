@@ -6,10 +6,10 @@ from PIL import Image
 from data_preprocessing import *
 import urllib.request
 import io
-
+from nltk.translate.bleu_score import corpus_bleu
 from torch.utils.data import DataLoader
 from MyDataset import MyDataset
-
+from nltk.translate.bleu_score import corpus_bleu
 import torch
 from torch.nn.utils.rnn import pad_sequence
 import torch.nn as nn
@@ -32,22 +32,21 @@ DEC_HID_DIM = 512
 DEC_OUTPUT = 512
 ATTN_DIM = 512
 EMB_DIM = 256
-ENC_DROPOUT = 0.5
-DEC_DROPOUT = 0.5
 PAD_IDX = 0
+TRAIN_SIZE = 25600
 loss_plot = []
 
-# torch.autograd.set_detect_anomaly(True)
+torch.autograd.set_detect_anomaly(True)
 
-def main():
+
+def get_model(name='saved_models/model', path=extracted_data_train_dir, size=TRAIN_SIZE):
     train_vocab = Vocabulary(train_captions, max_vocab_size)
-    encoded_captions_train = [train_vocab.encode_sentence(x) for x in train_captions]
     wat = [torch.tensor(x[1:], dtype=torch.int16) for x in train_vocab.encoded_captions]
     padded = pad_sequence(wat).permute(1, 0)
 
-    dataset = MyDataset(enc_captions=padded[:25600 * 2],
-                        image_paths=train_image_paths[:25600 * 2],
-                        data_dir=extracted_data_train_dir + 'vecs/')
+    dataset = MyDataset(enc_captions=padded[:size],
+                        image_paths=train_image_paths[:size],
+                        data_dir=path + 'vecs/')
 
     dataloader = DataLoader(dataset=dataset, batch_size=256,
                             num_workers=0)
@@ -56,44 +55,53 @@ def main():
     model = End2End(ENC_INPUT, ENC_OUTPUT, DEC_HID_DIM, DEC_OUTPUT,
                     EMB_DIM, ATTN_DIM, train_vocab, criterion, device)
 
-    model.load_state_dict(torch.load('saved_models/model'))
+    model.load_state_dict(torch.load(name))
+
+    # model.evaluate(5)
+    # return
 
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
-    optimizer.lr = 0.001
+    # optimizer.lr = 0.001
 
-    train(model, dataloader, optimizer)
+    return model, dataset, dataloader, optimizer
 
 
-def train(model, dataloader, optimizer):
+def main():
+    model, dataset, dataloader, optimizer = get_model()
+    train(model, dataset, dataloader, optimizer)
+
+
+def train(model, dataset, dataloader, optimizer):
     model.train()
     for epoch in range(EPOCHS):
         start = time.time()
         total_loss = 0
 
         steps = 0
+        total_bleu = 0
         for idx, batch in enumerate(dataloader):
-            img_tensor, target, _ = batch[0], batch[1], batch[2]
+            img_tensor, target, img_names = batch[0], batch[1], batch[2]
 
-            batch_loss, t_loss = train_step(img_tensor, target, model, optimizer)
+            out, batch_loss, t_loss = train_step(img_tensor, target, model, optimizer)
+
+            batch_bleu = calculate_bleu(out, img_names, dataset, model.vocab)
+            total_bleu += batch_bleu
+
             total_loss += t_loss.item()
 
-            if idx % 500 == 0:
-                print('Epoch {} Batch {} Loss {:.4f}'.format(
-                    epoch + 1, idx, batch_loss.item() / int(target.shape[1])))
+            if idx % 50 == 0:
+                print('Epoch {} Batch {} Loss {:.4f} Bleu {:.4f}'.format(
+                    epoch + 1, idx, batch_loss.item() / int(target.shape[1]), batch_bleu))
             steps += 1
 
         if epoch == 0:
             dataloader.dataset.set_use_cache(True)
-            dataloader.num_workers = 1
+            dataloader.num_workers = 4
 
-        # storing the epoch end loss value to plot later
-        loss_plot.append(total_loss / steps)
+        torch.save(model.state_dict(), 'saved_models/model')
 
-        if epoch > 0:
-            torch.save(model.state_dict(), 'saved_models/model')
-
-        print('Epoch {} Loss {:.6f}'.format(epoch + 1,
-                                            total_loss / steps))
+        print('Epoch {} Loss {:.6f} Bleu {:.4f}'.format(epoch + 1,
+                                                        total_loss / steps, total_bleu / steps))
         print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
 
 
@@ -107,7 +115,7 @@ def train_step(batch, captions, model, optimizer):
     loss.backward()
     optimizer.step()
     total_loss = loss / int(caption_length)
-    return loss, total_loss
+    return out, loss, total_loss
 
 
 if __name__ == '__main__':

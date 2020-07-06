@@ -1,10 +1,16 @@
 import torch
 import torch.nn as nn
 from torchvision import models
-import numpy as np
 
 
 class ResNet(nn.Module):
+    """ Pretrained ResNet network used to create feature maps of images
+
+    Attributes
+    -----------
+    features: torch.nn.Sequential
+        conv blocks of original ResNet without FC layers
+    """
     def __init__(self):
         super(ResNet, self).__init__()
 
@@ -16,7 +22,9 @@ class ResNet(nn.Module):
             param.requires_grad = False
 
     def forward(self, x):
+        """ Forward pass """
         x = self.features(x)
+
         # convert to (batch_size, 8, 8, 2048)
         return x.permute(0, 2, 3, 1)
 
@@ -26,4 +34,3 @@ if __name__ == '__main__':
     arr = torch.ones((2, 3, 255, 256), dtype=torch.float32)
     m = x(arr)
     print(m.shape)
-    # print(x)
