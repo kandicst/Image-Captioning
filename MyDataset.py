@@ -1,7 +1,5 @@
 from torch.utils.data import Dataset
 import torch
-import ctypes
-import multiprocessing as mp
 import numpy as np
 
 batch_size, w, h = 64, 64, 2048

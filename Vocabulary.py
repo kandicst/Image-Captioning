@@ -19,6 +19,7 @@ class Vocabulary:
         reverse mapping from word_to_idx
 
     """
+
     def __init__(self, text, top_words=10000):
         self.word_freq = defaultdict(int)
         self.word_to_idx = {"<pad>": 0, "<start>": 1, "<end>": 2, '<unk>': 3}
@@ -72,8 +73,3 @@ class Vocabulary:
     def decode_and_clean(self, indices):
         caption = self.decode_sentence(indices)
         return caption[:caption.index('<pad>')]
-
-
-
-# if __name__ == '__main__':
-    # preprocess_sentence('<START>........... A very clean and well decorated empty bathroom <END>')

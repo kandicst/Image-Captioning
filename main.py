@@ -57,9 +57,6 @@ def get_model(name='saved_models/model', path=extracted_data_train_dir, size=TRA
 
     model.load_state_dict(torch.load(name))
 
-    # model.evaluate(5)
-    # return
-
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
     # optimizer.lr = 0.001
 
