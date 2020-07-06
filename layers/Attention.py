@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-from torchvision import models
-import numpy as np
 
 
 class Attention(nn.Module):
@@ -26,16 +24,8 @@ class Attention(nn.Module):
         h_t = self.hidden_fc(h_t)
 
         e_t = torch.tanh(a + h_t)
-        # print("SCORE: ", e_t.shape)
         full = self.combined_fc(e_t)
-        # print(full.shape)
         alpha = self.softmax(full)
-        # print("ATT: ", alpha.shape)
-        # print(alpha[0])
-        # print(alpha.shape)
-        # print(alpha[0].tolist())
         context_vector = (features * alpha).sum(dim=1)
-        # print("CTX: ", context_vector.shape)
-        # raise Exception()
 
         return context_vector, alpha
